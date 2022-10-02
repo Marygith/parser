@@ -1,6 +1,6 @@
-package com.pet.parser.TCP;
+package com.pet.parser.tcp;
 
-import com.pet.parser.Service.DataService;
+import com.pet.parser.services.DataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;

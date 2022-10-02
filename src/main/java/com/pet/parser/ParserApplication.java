@@ -3,7 +3,6 @@ package com.pet.parser;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import sun.net.www.http.HttpClient;
 
 
 import javax.net.SocketFactory;

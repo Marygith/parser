@@ -1,4 +1,4 @@
-package com.pet.parser.TCP;
+package com.pet.parser.tcp;
 
 
 import org.springframework.context.annotation.Bean;

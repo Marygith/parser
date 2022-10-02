@@ -1,4 +1,4 @@
-package com.pet.parser.Service;
+package com.pet.parser.services;
 
 import org.springframework.messaging.MessageHeaders;
 
