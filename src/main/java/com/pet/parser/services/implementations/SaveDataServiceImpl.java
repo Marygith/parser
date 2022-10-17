@@ -1,6 +1,6 @@
 package com.pet.parser.services.implementations;
 
-import com.pet.parser.services.interfaces.SaveService;
+import com.pet.parser.services.SaveDataService;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.util.Date;
 
 
 @Service
-public class SaveInfo implements SaveService{
+public class SaveDataServiceImpl implements SaveDataService {
 
 
     @Override

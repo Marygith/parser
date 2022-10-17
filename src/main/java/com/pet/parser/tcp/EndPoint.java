@@ -1,6 +1,6 @@
 package com.pet.parser.tcp;
 
-import com.pet.parser.services.interfaces.DataService;
+import com.pet.parser.services.GeneralService;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.MessageHeaders;
@@ -9,14 +9,14 @@ import org.springframework.messaging.MessageHeaders;
 @MessageEndpoint
 public class EndPoint {
 
-    private final DataService dataService;
+    private final GeneralService generalService;
 
-    public EndPoint(DataService  dataService) {
-        this.dataService=  dataService;
+    public EndPoint(GeneralService generalService) {
+        this.generalService = generalService;
     }
 
-    @ServiceActivator(inputChannel = "inboundChannel")
+    @ServiceActivator(inputChannel = "inboundChannel", outputChannel = "outboundChannel")
     public byte[] processMessage(byte[] payload, MessageHeaders messageHeaders) {
-        return dataService.processMessage(payload, messageHeaders);
+        return generalService.processMessage(payload, messageHeaders);
     }
 }
