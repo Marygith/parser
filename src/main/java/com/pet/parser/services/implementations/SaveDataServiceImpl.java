@@ -8,7 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 
 @Service
@@ -16,16 +18,20 @@ public class SaveDataServiceImpl implements SaveDataService {
 
 
     @Override
-    public void saveData(byte[] payload) {
+    public void saveData(List<byte[]> infoList) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-        Date now = new Date();
-        String fileName = sdf.format(now);
-        Path path = Paths.get(fileName.concat(".dat"));
-        try {
-            Files.write(path, payload);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
+        for (byte[] info : infoList) {
+            Date now = new Date();
+            String fileName = sdf.format(now);
+            Path path = Paths.get(fileName.concat(".dat"));
+
+            try {
+                Files.write(path, info);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

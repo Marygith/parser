@@ -1,7 +1,9 @@
 package com.pet.parser.tcp;
 
 
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -9,19 +11,38 @@ import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.config.EnableIntegration;
+import org.springframework.integration.ip.IpHeaders;
 import org.springframework.integration.ip.tcp.TcpReceivingChannelAdapter;
 import org.springframework.integration.ip.tcp.TcpSendingMessageHandler;
 import org.springframework.integration.ip.tcp.connection.AbstractClientConnectionFactory;
+import org.springframework.integration.ip.tcp.connection.TcpConnectionEvent;
 import org.springframework.integration.ip.tcp.connection.TcpNioClientConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.ByteArrayCrLfSerializer;
+import org.springframework.integration.ip.tcp.serializer.ByteArrayLfSerializer;
+import org.springframework.integration.ip.tcp.serializer.ByteArraySingleTerminatorSerializer;
 import org.springframework.integration.ip.tcp.serializer.TcpCodecs;
 import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 
 @Configuration
 @EnableIntegration
 @PropertySource("classpath:config.properties")
-public class ServerConf {
+public class ServerConf implements ApplicationListener<TcpConnectionEvent> {
 
+    @Override
+    public void onApplicationEvent(TcpConnectionEvent event) {
+        clientId = event.getConnectionId();
+        System.out.println("client id is " + clientId);
+    }
+
+
+    @MessagingGateway(defaultRequestChannel="outboundChannel")
+    public interface Gateway {
+        void send(@Payload byte[] data, @Header(IpHeaders.CONNECTION_ID) String connectionId);
+    }
+
+    private String clientId;
 
     @Value("${port:1234}")
     private int port;
@@ -29,6 +50,9 @@ public class ServerConf {
     @Value("${ip:localhost}")
     private String ip;
 
+    public String getClientId() {
+        return clientId;
+    }
 
     @Bean
     public MessageChannel inboundChannel() {
@@ -49,6 +73,8 @@ public class ServerConf {
 
     @Bean
     public ByteArrayCrLfSerializer deserializer() {
+
+
         return TcpCodecs.crlf();
     }
 

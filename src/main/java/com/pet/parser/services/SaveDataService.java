@@ -1,7 +1,9 @@
 package com.pet.parser.services;
 
+import java.util.List;
+
 public interface SaveDataService {
 
-    void saveData(byte[] payload);
+    void saveData(List<byte []> infoList);
 
 }

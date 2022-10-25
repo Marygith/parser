@@ -1,13 +1,15 @@
 package com.pet.parser.services.implementations;
 
 import com.pet.parser.services.ParserService;
-import com.pet.parser.services.SaveDataService;
+import com.pet.parser.tcp.ServerConf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 import static com.pet.parser.tcp.ParserConstants.*;
@@ -15,56 +17,54 @@ import static com.pet.parser.tcp.ParserConstants.*;
 @Service
 public class ParserServiceImpl implements ParserService {
 
-    private final SaveDataService saveData;
+    List<byte[]> infoList = new ArrayList<>();
 
+    private final ServerConf serverConf;
+    private final ServerConf.Gateway gateway;
     private final Logger log = LoggerFactory.getLogger(ParserServiceImpl.class);
     private ByteBuffer data;
     private ByteBuffer info;
     private ByteBuffer end;
     private int state = STATE_HEADER;
     private boolean isRR = false;
+    String clientId;
 
-    public ParserServiceImpl(SaveDataService saveData) {
-        this.saveData = saveData;
+    public ParserServiceImpl(ServerConf serverConf, ServerConf.Gateway gateway) {
+        this.serverConf = serverConf;
+        this.gateway = gateway;
     }
 
 
-    @Override
-    public byte[] parsePayload(byte[] payload) {
+    private void send(byte[] data, String clientId) {
+        gateway.send(data, clientId);
+    }
 
+    @Override
+    public List<byte[]> parsePayload(byte[] payload) {
+
+       // System.out.println(Arrays.toString(payload));
+
+        clientId = serverConf.getClientId();
         int len = payload.length;
         ByteBuffer buffer = ByteBuffer.allocate(len);
         buffer.put(payload);
 
         buffer.clear();
+
+
         while (buffer.remaining() > 0) {
             switch (state) {
                 case STATE_HEADER:
                     readData(buffer);
-                    if (isRR) {
-                        byte[] response = data.array();
-                        data = null;
-                        return response;
-                    }
                     break;
                 case STATE_DATA:
                     readInfo(buffer);
-                    payload = info.array();
                     break;
                 case STATE_FOOTER:
-                    byte[] response = readEnd(buffer);
-                    if (response != null) {
-                        return response;
-                    } else {
-                        return "".getBytes();
-                    }
-
-
+                    readEnd(buffer);
             }
         }
-
-
-        return payload;
+        return infoList;
     }
 
     private void fromBufToBuf(ByteBuffer p_src, ByteBuffer p_dst) {
@@ -78,64 +78,79 @@ public class ParserServiceImpl implements ParserService {
 
     private void readData(ByteBuffer buffer) {
 
-        data = ByteBuffer.allocate(MSG_DATA_SIZE);
+        if (data == null) {
+            data = ByteBuffer.allocate(MSG_DATA_SIZE);
+        }
         fromBufToBuf(buffer, data);
         data.clear();
 
-        int a_type = data.getInt(0);
-        switch (a_type) {
-            case TCP_IP_DATA:
-                short INFO_SIZE = data.getShort(MSG_SIZE_OFFSET);
-                info = ByteBuffer.allocate(INFO_SIZE);
-                short messageId = data.getShort(MSG_NUM_OFFSET);
-                log.debug("Header received. Message number=" + messageId + "; Data " +
-                        "length=" + INFO_SIZE);
-                state = STATE_DATA;
+        if (!data.hasRemaining()) {
+            int a_type = data.get(0);
+            switch (a_type) {
+                case TCP_IP_DATA:
+                    short INFO_SIZE = data.getShort(MSG_SIZE_OFFSET);
+                    info = ByteBuffer.allocate(INFO_SIZE);
+                    short messageId = data.getShort(MSG_NUM_OFFSET);
+                    log.info("Header received. Message number=" + messageId + "; Data " +
+                            "length=" + INFO_SIZE);
+                    state = STATE_DATA;
 
-                break;
-            case TCP_IP_RR:
-                if (log.isDebugEnabled()) {
-                    log.debug("RR message received");
-                }
-                isRR = true;
+                    break;
+                case TCP_IP_RR:
+                    if (log.isDebugEnabled()) {
+                        log.debug("RR message received");
+                    }
+                    sendRRMessage();
+                    data = null;
+                    break;
 
-                break;
-            default:
-                log.debug("Wrong message type");
+                default:
+                    log.info("Wrong message type");
 
+            }
         }
     }
 
 
     private void readInfo(ByteBuffer buffer) {
         fromBufToBuf(buffer, info);
+
         if (!info.hasRemaining()) {
             state = STATE_FOOTER;
             if (log.isDebugEnabled()) {
-                log.debug("Data message received");
+                log.info("Data message received: " + Arrays.toString(info.array()));
             }
         }
     }
 
 
-    private byte[] readEnd(ByteBuffer buffer) {
+    private void readEnd(ByteBuffer buffer) {
         end = ByteBuffer.allocate(MSG_DATA_SIZE);
-        byte[] ackMessage = null;
-        fromBufToBuf(buffer, end);
 
+        fromBufToBuf(buffer, end);
         end.clear();
         end.putInt(1);
 
 
         if (Arrays.equals(data.array(), end.array())) {
-
-            ackMessage = end.array();
-            ackMessage[0] = TCP_IP_ACK;
-            saveData.saveData(info.array());
-            log.info("Data is valid");
-            reset();
+            infoList.add(info.array());
+            sendAckMessage();
         }
-        return ackMessage;
+    }
+
+    private void sendAckMessage() {
+        byte[] ackMessage = end.array();
+        ackMessage[0] = TCP_IP_ACK;
+        send(ackMessage, clientId);
+        log.info("Data is valid");
+        reset();
+    }
+
+    private void sendRRMessage() {
+        data.clear();
+        byte[] a_header = new byte[MSG_DATA_SIZE];
+        data.get(a_header);
+        send(a_header, clientId);
     }
 
 

@@ -1,7 +1,10 @@
 package com.pet.parser.services;
 
+
+import java.util.List;
+
 public interface ParserService {
 
-    byte[] parsePayload(byte[] payload);
+    List<byte []> parsePayload(byte[] payload);
 
 }
