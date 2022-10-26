@@ -17,8 +17,8 @@ public class EndPoint {
 
     @ServiceActivator(inputChannel = "inboundChannel", outputChannel = "outboundChannel")
     public void processMessage(byte[] payload) {
+
         generalService.processMessage(payload);
+
     }
-
-
 }

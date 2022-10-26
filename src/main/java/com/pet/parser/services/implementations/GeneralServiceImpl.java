@@ -27,11 +27,7 @@ public class GeneralServiceImpl implements GeneralService {
     @Override
     public void  processMessage(byte[] payload) {
 
-        List<byte []> list = parserServiceImpl.parsePayload(payload);
-        saveDataServiceImpl.saveData(list);
-
+        parserServiceImpl.parsePayload(payload);
+        saveDataServiceImpl.saveData();
     }
-
-
-
 }

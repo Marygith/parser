@@ -1,7 +1,6 @@
 package com.pet.parser.tcp;
 
 
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +9,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.integration.channel.DirectChannel;
+import org.springframework.integration.channel.QueueChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.ip.IpHeaders;
 import org.springframework.integration.ip.tcp.TcpReceivingChannelAdapter;
@@ -18,8 +18,6 @@ import org.springframework.integration.ip.tcp.connection.AbstractClientConnectio
 import org.springframework.integration.ip.tcp.connection.TcpConnectionEvent;
 import org.springframework.integration.ip.tcp.connection.TcpNioClientConnectionFactory;
 import org.springframework.integration.ip.tcp.serializer.ByteArrayCrLfSerializer;
-import org.springframework.integration.ip.tcp.serializer.ByteArrayLfSerializer;
-import org.springframework.integration.ip.tcp.serializer.ByteArraySingleTerminatorSerializer;
 import org.springframework.integration.ip.tcp.serializer.TcpCodecs;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.handler.annotation.Header;
@@ -37,17 +35,17 @@ public class ServerConf implements ApplicationListener<TcpConnectionEvent> {
     }
 
 
-    @MessagingGateway(defaultRequestChannel="outboundChannel")
+    @MessagingGateway(defaultRequestChannel = "outboundChannel")
     public interface Gateway {
         void send(@Payload byte[] data, @Header(IpHeaders.CONNECTION_ID) String connectionId);
     }
 
     private String clientId;
 
-    @Value("${port:1234}")
+    @Value("${port}")
     private int port;
 
-    @Value("${ip:localhost}")
+    @Value("${ip}")
     private String ip;
 
     public String getClientId() {
@@ -56,7 +54,7 @@ public class ServerConf implements ApplicationListener<TcpConnectionEvent> {
 
     @Bean
     public MessageChannel inboundChannel() {
-        return new DirectChannel();
+        return new QueueChannel();
     }
 
 
@@ -67,14 +65,11 @@ public class ServerConf implements ApplicationListener<TcpConnectionEvent> {
 
     @Bean
     public ByteArrayCrLfSerializer serializer() {
-
         return TcpCodecs.crlf();
     }
 
     @Bean
     public ByteArrayCrLfSerializer deserializer() {
-
-
         return TcpCodecs.crlf();
     }
 
@@ -97,8 +92,6 @@ public class ServerConf implements ApplicationListener<TcpConnectionEvent> {
         tcpReceivingChannelAdapter.setConnectionFactory(tcpNioClientConnectionFactory);
         tcpReceivingChannelAdapter.setClientMode(true);
         tcpReceivingChannelAdapter.setOutputChannel(inboundChannel);
-
-
         return tcpReceivingChannelAdapter;
     }
 

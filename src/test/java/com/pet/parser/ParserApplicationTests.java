@@ -4,57 +4,53 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.net.ServerSocketFactory;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 @SpringBootTest
 class ParserApplicationTests {
 
-
     @Test
-    void contextLoads() {
+    void
+    contextLoads() {
+
         try {
-
-            ByteBuffer byteBuffer = ByteBuffer.allocate(70);
-            String buf = "qwertyuopasgdfghjk";
-            String info = "some data here";
-            byteBuffer.putInt(1).putInt(15).putShort((short) 14).put(buf.getBytes());
-            byteBuffer.put(info.getBytes());
-            byteBuffer.putInt(4).putInt(15).putShort((short) 14).put(buf.getBytes());
-            byteBuffer.clear();
-
             Socket socket = ServerSocketFactory.getDefault().createServerSocket(1234).accept();
-            socket.setKeepAlive(true);
             OutputStream writer = socket.getOutputStream();
 
-            File file = new File("meteo");
-            FileInputStream fs = new FileInputStream(file);
-            byte[] b = new byte[82];
-            fs.read(b, 0, 82);
+            Path path = Paths.get("meteo");
+            byte[] dataFromFile = Files.readAllBytes(path);
+            writer.write(dataFromFile);
 
-            writer.write(b);
-            /*byte[] aa = new byte[]{13, 10, 13, 10};
-            writer.write(aa);*/
             InputStream reader = socket.getInputStream();
             BufferedReader in = new BufferedReader(new InputStreamReader(reader));
             int c;
 
             while ((c = in.read()) != -1) {
-                StringBuilder str = new StringBuilder();
+                List<Byte> ans = new ArrayList<>();
+
                 while (c != 10) {
-                    char data = (char) c;
-                    str.append(data);
+                    ans.add((byte) c);
                     c = in.read();
                 }
-                System.out.println(str);
+                //System.out.println("Answer: "+ Arrays.toString(ans.toArray()));
             }
             socket.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
 }
+
+
+
+

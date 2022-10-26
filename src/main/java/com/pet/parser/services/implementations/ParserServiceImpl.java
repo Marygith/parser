@@ -7,17 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-
 
 import static com.pet.parser.tcp.ParserConstants.*;
 
 @Service
 public class ParserServiceImpl implements ParserService {
 
-    List<byte[]> infoList = new ArrayList<>();
 
     private final ServerConf serverConf;
     private final ServerConf.Gateway gateway;
@@ -26,35 +22,45 @@ public class ParserServiceImpl implements ParserService {
     private ByteBuffer info;
     private ByteBuffer end;
     private int state = STATE_HEADER;
-    private boolean isRR = false;
-    String clientId;
+    private String clientId;
+    private byte[] infoToBeSaved;
+    private short messageId = -1;
 
     public ParserServiceImpl(ServerConf serverConf, ServerConf.Gateway gateway) {
         this.serverConf = serverConf;
         this.gateway = gateway;
     }
 
+    public byte[] getInfoToBeSaved() {
+        return infoToBeSaved;
+    }
+
+    public short getMessageId() {
+        return messageId;
+    }
 
     private void send(byte[] data, String clientId) {
         gateway.send(data, clientId);
     }
 
     @Override
-    public List<byte[]> parsePayload(byte[] payload) {
+    public void parsePayload(byte[] payload) {
 
-       // System.out.println(Arrays.toString(payload));
 
+        byte[] del = new byte[]{13, 10};
         clientId = serverConf.getClientId();
-        int len = payload.length;
+        int len = payload.length + 2;
         ByteBuffer buffer = ByteBuffer.allocate(len);
         buffer.put(payload);
 
+        buffer.put(del);
         buffer.clear();
 
 
         while (buffer.remaining() > 0) {
             switch (state) {
                 case STATE_HEADER:
+
                     readData(buffer);
                     break;
                 case STATE_DATA:
@@ -62,9 +68,10 @@ public class ParserServiceImpl implements ParserService {
                     break;
                 case STATE_FOOTER:
                     readEnd(buffer);
+
             }
         }
-        return infoList;
+
     }
 
     private void fromBufToBuf(ByteBuffer p_src, ByteBuffer p_dst) {
@@ -82,24 +89,23 @@ public class ParserServiceImpl implements ParserService {
             data = ByteBuffer.allocate(MSG_DATA_SIZE);
         }
         fromBufToBuf(buffer, data);
-        data.clear();
 
         if (!data.hasRemaining()) {
             int a_type = data.get(0);
             switch (a_type) {
                 case TCP_IP_DATA:
                     short INFO_SIZE = data.getShort(MSG_SIZE_OFFSET);
+
                     info = ByteBuffer.allocate(INFO_SIZE);
-                    short messageId = data.getShort(MSG_NUM_OFFSET);
+                    messageId = data.getShort(MSG_NUM_OFFSET);
                     log.info("Header received. Message number=" + messageId + "; Data " +
                             "length=" + INFO_SIZE);
                     state = STATE_DATA;
 
                     break;
                 case TCP_IP_RR:
-                    if (log.isDebugEnabled()) {
-                        log.debug("RR message received");
-                    }
+
+                    log.info("RR message received");
                     sendRRMessage();
                     data = null;
                     break;
@@ -117,24 +123,28 @@ public class ParserServiceImpl implements ParserService {
 
         if (!info.hasRemaining()) {
             state = STATE_FOOTER;
-            if (log.isDebugEnabled()) {
-                log.info("Data message received: " + Arrays.toString(info.array()));
-            }
+            log.info("Data message received: " + Arrays.toString(info.array()));
+
         }
     }
 
 
     private void readEnd(ByteBuffer buffer) {
+        if (end == null) {
+            end = ByteBuffer.allocate(MSG_DATA_SIZE);
+        }
         end = ByteBuffer.allocate(MSG_DATA_SIZE);
-
         fromBufToBuf(buffer, end);
-        end.clear();
-        end.putInt(1);
 
+        if (!end.hasRemaining()) {
+            byte[] a_end = end.array();
+            byte[] a_data = data.array();
 
-        if (Arrays.equals(data.array(), end.array())) {
-            infoList.add(info.array());
-            sendAckMessage();
+            a_data[0] = TCP_IP_END;
+            if (Arrays.equals(a_data, a_end)) {
+                infoToBeSaved = info.array();
+                sendAckMessage();
+            }
         }
     }
 
@@ -160,6 +170,4 @@ public class ParserServiceImpl implements ParserService {
         end = null;
         state = STATE_HEADER;
     }
-
-
 }

@@ -4,6 +4,7 @@ public class ParserConstants {
 
     public static final int TCP_IP_DATA = 1;
     public static final int TCP_IP_ACK = 2;
+    public static final int TCP_IP_END = 4;
     public static final int TCP_IP_RR = 6;
 
 

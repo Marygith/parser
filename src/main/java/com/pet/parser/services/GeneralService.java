@@ -5,5 +5,4 @@ public interface GeneralService {
 
     void processMessage(byte[] payload);
 
-
 }
