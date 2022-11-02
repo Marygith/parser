@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug" strict="true"
+               name="XMLConfigTest" packages="org.apache.logging.log4j.test">
+    <Filter type="ThresholdFilter" level="trace"/>
+
+    <Appenders>
+        <RollingFile name="rollingFile"
+                     fileName="logs/log4j2.log"
+                     filePattern="logs/log4j2-%d{yyyy-MM-dd}-%i.log">
+
+            <PatternLayout disableAnsi="false"
+                           pattern="%highlight{%d{HH:mm:ss.SSS} %-5level %logger{36}.%M() @%L - %msg%n}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=black, DEBUG=green bold, TRACE=blue}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+
+        <Root level="DEBUG">
+            <AppenderRef ref="rollingFile"/>
+        </Root>
+
+    </Loggers>
+
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="rollingFile"/>
+        </Root>
+
+    </Loggers>
+
+
+</Configuration>

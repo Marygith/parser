@@ -1,8 +1,10 @@
 package com.pet.parser.services;
 
 
+import java.nio.ByteBuffer;
+
 public interface GeneralService {
 
-    void processMessage(byte[] payload);
+    void processMessage(ByteBuffer byteBuffer);
 
 }

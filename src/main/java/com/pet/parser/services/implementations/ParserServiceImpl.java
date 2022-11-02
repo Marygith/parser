@@ -1,13 +1,16 @@
 package com.pet.parser.services.implementations;
 
+import com.pet.parser.events.EventsPublisher;
+import com.pet.parser.events.SaveDataEvent;
+import com.pet.parser.events.TcpEvent;
 import com.pet.parser.services.ParserService;
-import com.pet.parser.tcp.ServerConf;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import static com.pet.parser.tcp.ParserConstants.*;
 
@@ -15,47 +18,26 @@ import static com.pet.parser.tcp.ParserConstants.*;
 public class ParserServiceImpl implements ParserService {
 
 
-    private final ServerConf serverConf;
-    private final ServerConf.Gateway gateway;
-    private final Logger log = LoggerFactory.getLogger(ParserServiceImpl.class);
+    private static final Logger log = LogManager.getLogger(ParserServiceImpl.class);
+
     private ByteBuffer data;
     private ByteBuffer info;
     private ByteBuffer end;
     private int state = STATE_HEADER;
-    private String clientId;
-    private byte[] infoToBeSaved;
-    private short messageId = -1;
 
-    public ParserServiceImpl(ServerConf serverConf, ServerConf.Gateway gateway) {
-        this.serverConf = serverConf;
-        this.gateway = gateway;
+    private final EventsPublisher eventsPublisher;
+
+    public ParserServiceImpl(EventsPublisher eventsPublisher) {
+
+        this.eventsPublisher = eventsPublisher;
     }
 
-    public byte[] getInfoToBeSaved() {
-        return infoToBeSaved;
-    }
-
-    public short getMessageId() {
-        return messageId;
-    }
-
-    private void send(byte[] data, String clientId) {
-        gateway.send(data, clientId);
-    }
 
     @Override
-    public void parsePayload(byte[] payload) {
+    public void parsePayload(ByteBuffer buffer) {
 
 
-        byte[] del = new byte[]{13, 10};
-        clientId = serverConf.getClientId();
-        int len = payload.length + 2;
-        ByteBuffer buffer = ByteBuffer.allocate(len);
-        buffer.put(payload);
-
-        buffer.put(del);
         buffer.clear();
-
 
         while (buffer.remaining() > 0) {
             switch (state) {
@@ -97,7 +79,7 @@ public class ParserServiceImpl implements ParserService {
                     short INFO_SIZE = data.getShort(MSG_SIZE_OFFSET);
 
                     info = ByteBuffer.allocate(INFO_SIZE);
-                    messageId = data.getShort(MSG_NUM_OFFSET);
+                    short messageId = data.getShort(MSG_NUM_OFFSET);
                     log.info("Header received. Message number=" + messageId + "; Data " +
                             "length=" + INFO_SIZE);
                     state = STATE_DATA;
@@ -111,7 +93,7 @@ public class ParserServiceImpl implements ParserService {
                     break;
 
                 default:
-                    log.info("Wrong message type");
+                    log.warn("Wrong message type");
 
             }
         }
@@ -133,7 +115,6 @@ public class ParserServiceImpl implements ParserService {
         if (end == null) {
             end = ByteBuffer.allocate(MSG_DATA_SIZE);
         }
-        end = ByteBuffer.allocate(MSG_DATA_SIZE);
         fromBufToBuf(buffer, end);
 
         if (!end.hasRemaining()) {
@@ -142,7 +123,7 @@ public class ParserServiceImpl implements ParserService {
 
             a_data[0] = TCP_IP_END;
             if (Arrays.equals(a_data, a_end)) {
-                infoToBeSaved = info.array();
+                eventsPublisher.publishSaveDataEvent(new SaveDataEvent(info.array()));
                 sendAckMessage();
             }
         }
@@ -151,7 +132,7 @@ public class ParserServiceImpl implements ParserService {
     private void sendAckMessage() {
         byte[] ackMessage = end.array();
         ackMessage[0] = TCP_IP_ACK;
-        send(ackMessage, clientId);
+        eventsPublisher.publishTcpEvent(new TcpEvent(ackMessage));
         log.info("Data is valid");
         reset();
     }
@@ -160,7 +141,7 @@ public class ParserServiceImpl implements ParserService {
         data.clear();
         byte[] a_header = new byte[MSG_DATA_SIZE];
         data.get(a_header);
-        send(a_header, clientId);
+        eventsPublisher.publishTcpEvent(new TcpEvent(a_header));
     }
 
 

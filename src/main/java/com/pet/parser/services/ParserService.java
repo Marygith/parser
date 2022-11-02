@@ -1,11 +1,9 @@
 package com.pet.parser.services;
 
+import java.nio.ByteBuffer;
+
 public interface ParserService {
 
-    void parsePayload(byte[] payload);
-
-    byte[] getInfoToBeSaved();
-
-    short getMessageId();
+    void parsePayload(ByteBuffer byteBuffer);
 
 }

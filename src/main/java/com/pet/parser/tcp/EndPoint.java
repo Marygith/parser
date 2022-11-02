@@ -4,6 +4,8 @@ import com.pet.parser.services.GeneralService;
 import org.springframework.integration.annotation.MessageEndpoint;
 import org.springframework.integration.annotation.ServiceActivator;
 
+import java.nio.ByteBuffer;
+
 
 @MessageEndpoint
 public class EndPoint {
@@ -18,7 +20,15 @@ public class EndPoint {
     @ServiceActivator(inputChannel = "inboundChannel", outputChannel = "outboundChannel")
     public void processMessage(byte[] payload) {
 
-        generalService.processMessage(payload);
+        byte[] del = new byte[]{13, 10};
+        int len = payload.length + 2;
+
+        ByteBuffer buffer = ByteBuffer.allocate(len);
+        buffer.put(payload);
+        buffer.put(del);
+        buffer.clear();
+
+        generalService.processMessage(buffer);
 
     }
 }

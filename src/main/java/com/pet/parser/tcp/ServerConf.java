@@ -31,7 +31,6 @@ public class ServerConf implements ApplicationListener<TcpConnectionEvent> {
     @Override
     public void onApplicationEvent(TcpConnectionEvent event) {
         clientId = event.getConnectionId();
-        System.out.println("client id is " + clientId);
     }
 
 
