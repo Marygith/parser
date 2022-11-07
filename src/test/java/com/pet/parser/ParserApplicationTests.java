@@ -28,8 +28,8 @@ class ParserApplicationTests {
     @Test
     void
     contextLoads() {
-
         try {
+
             Socket socket = ServerSocketFactory.getDefault().createServerSocket(1234).accept();
             OutputStream writer = socket.getOutputStream();
 
@@ -57,6 +57,7 @@ class ParserApplicationTests {
     }
 
 }
+
 
 
 

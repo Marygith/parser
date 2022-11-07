@@ -12,15 +12,8 @@ public class EventsPublisher {
         this.eventPublisher = publisher;
     }
 
-    public void publishTcpEvent(TcpEvent event) {
+    public void publishEvent(CustomEvent event) {
         eventPublisher.publishEvent(event);
     }
 
-    public void publishSaveDataEvent(SaveDataEvent event) {
-        eventPublisher.publishEvent(event);
-    }
-
- /*   public void publishMsgEvent(String msg) {
-        eventPublisher.publishEvent(msg);
-    }*/
 }

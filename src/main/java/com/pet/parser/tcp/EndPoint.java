@@ -1,8 +1,9 @@
 package com.pet.parser.tcp;
 
+import com.pet.parser.events.CustomEvent;
 import com.pet.parser.services.GeneralService;
+import org.springframework.context.event.EventListener;
 import org.springframework.integration.annotation.MessageEndpoint;
-import org.springframework.integration.annotation.ServiceActivator;
 
 import java.nio.ByteBuffer;
 
@@ -17,15 +18,14 @@ public class EndPoint {
         this.generalService = generalService;
     }
 
-    @ServiceActivator(inputChannel = "inboundChannel", outputChannel = "outboundChannel")
-    public void processMessage(byte[] payload) {
+    @EventListener(condition = "#event.eventType eq 'GetDataEvent'")
+    public void processMessage(CustomEvent event) {
 
-        byte[] del = new byte[]{13, 10};
-        int len = payload.length + 2;
+        byte[] payload = event.getPayload();
+        int len = payload.length;
 
         ByteBuffer buffer = ByteBuffer.allocate(len);
         buffer.put(payload);
-        buffer.put(del);
         buffer.clear();
 
         generalService.processMessage(buffer);
