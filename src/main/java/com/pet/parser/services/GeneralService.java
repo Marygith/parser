@@ -1,10 +1,11 @@
 package com.pet.parser.services;
 
 
-import java.nio.ByteBuffer;
-
+/**
+ * Interface of service that processes data, received from tcp server.
+ */
 public interface GeneralService {
 
-    void processMessage(ByteBuffer byteBuffer);
+    void processMessage(byte[] payload);
 
 }

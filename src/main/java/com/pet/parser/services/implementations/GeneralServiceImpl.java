@@ -5,8 +5,11 @@ import com.pet.parser.services.GeneralService;
 import com.pet.parser.services.ParserService;
 import org.springframework.stereotype.Service;
 
-import java.nio.ByteBuffer;
-
+/**
+ * <p>GeneralService implementation.</p>
+ * Service class that processes byte [] data received from server,
+ * passing it to the {@link ParserService}.
+ */
 
 @Service
 public class GeneralServiceImpl implements GeneralService {
@@ -22,11 +25,16 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
 
+    /**
+     * A method that passes data to the {@link ParserService}.
+     *
+     * @param payload received data.
+     */
     @Override
-    public void processMessage(ByteBuffer byteBuffer) {
+    public void processMessage(byte[] payload) {
 
 
-        parserServiceImpl.parsePayload(byteBuffer);
+        parserServiceImpl.parsePayload(payload);
 
     }
 }

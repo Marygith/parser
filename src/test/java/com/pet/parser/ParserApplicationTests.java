@@ -19,12 +19,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Test class
+ */
 @SpringBootTest
 class ParserApplicationTests {
 
     private static final Logger log = LogManager.getLogger(ParserServiceImpl.class);
 
 
+    /**
+     * Test method that creates ServerSocket that sends test data from file to the localhost:1234.
+     * Also, this method logs received replies.
+     */
     @Test
     void
     contextLoads() {

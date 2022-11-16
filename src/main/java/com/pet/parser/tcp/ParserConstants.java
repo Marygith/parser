@@ -1,5 +1,8 @@
 package com.pet.parser.tcp;
 
+/**
+ * A class with constants for tcp communication with server.
+ */
 public class ParserConstants {
 
     public static final int TCP_IP_DATA = 1;

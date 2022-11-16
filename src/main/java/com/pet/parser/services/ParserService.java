@@ -1,9 +1,10 @@
 package com.pet.parser.services;
 
-import java.nio.ByteBuffer;
-
+/**
+ * Interface of service that parses received byte [] data.
+ */
 public interface ParserService {
 
-    void parsePayload(ByteBuffer byteBuffer);
+    void parsePayload(byte[] payload);
 
 }

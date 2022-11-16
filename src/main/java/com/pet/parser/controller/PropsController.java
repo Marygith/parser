@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
+/**
+ * RestController class, that receives {@link Props} via HTTP POST method.
+ */
 @RestController
 @RequestMapping(value = "/config")
 public class PropsController {
@@ -21,6 +23,12 @@ public class PropsController {
         this.saveServerPropsService = saveServerSettingsService;
     }
 
+    /**
+     * A method that passes received {@link RequestBody} to the {@link SaveServerPropsService} .
+     *
+     * @param props received RequestBody
+     * @return OK status
+     */
     @PostMapping
     public ResponseEntity<?> getServerSettings(@RequestBody Props props) {
 
